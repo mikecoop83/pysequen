@@ -4,7 +4,6 @@
 from __future__ import print_function
 
 import logging
-import traceback
 from Queue import Queue
 from threading import Thread, Event, Lock
 from blockingdeque import BlockingDeque
@@ -76,8 +75,8 @@ class SequencedPool(object):
         logger.debug('All workers stopped')
 
     def _run_dispatcher(self):
-        while True:
-            try:
+        try:
+            while True:
                 logger.debug('Waiting for ready worker')
                 worker = self._ready_worker_queue.get()
                 logger.debug('Got worker %d' % worker.worker_id)
@@ -115,10 +114,10 @@ class SequencedPool(object):
                     self._tasks_changed_event.wait()
                     self._tasks_changed_event.clear()
                     logger.debug('Got notification of change in tasks')
-            except:
-                logger.debug('Error processing task for worker %d' % worker.worker_id)
-                traceback.print_exc()
-        logger.debug('Dispatcher stopped')
+        except Exception:
+            logger.exception('Error running dispatcher')
+        else:
+            logger.debug('Dispatcher stopped')
 
 
 class Worker(object):
@@ -132,8 +131,9 @@ class Worker(object):
         Worker._next_worker_id += 1
         self._is_running = Event()
         self._stopping_event = Event()
-        self._worker_thread = Thread(name='worker ' + str(self.worker_id),
-                                     target=self._run_worker)
+        self._worker_thread = Thread(
+            name='worker ' + str(self.worker_id),
+            target=self._run_worker)
         self._worker_thread.daemon = True
 
     def is_busy(self):
@@ -147,17 +147,24 @@ class Worker(object):
         self._worker_thread.start()
 
     def _run_worker(self):
-        while True:
-            logger.debug('Waiting for task')
-            self._task_ready_event.wait()
-            if self._stopping_event.is_set():
-                break
-            self._task_ready_event.clear()
-            logger.debug('Running task %s' % self._task)
-            self._task.run()
-            logger.debug('Task %s finished' % self._task)
-            self._complete_task_handler(self, self._task)
-            self._task = None
+        try:
+            while True:
+                logger.debug('Waiting for task')
+                self._task_ready_event.wait()
+                if self._stopping_event.is_set():
+                    break
+                self._task_ready_event.clear()
+                logger.debug('Running task %s' % self._task)
+                try:
+                    self._task.run()
+                except Exception:
+                    logger.exception('Error running task %s' % self._task)
+                else:
+                    logger.debug('Task %s finished' % self._task)
+                self._complete_task_handler(self, self._task)
+                self._task = None
+        except Exception:
+            logger.exception('Error running worker')
         logger.debug('Worker %d stopped' % self.worker_id)
 
     def stop_worker(self):
