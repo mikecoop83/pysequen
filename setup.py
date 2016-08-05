@@ -8,8 +8,5 @@ setup(name='pysequen',
       author_email='mikecoop83@gmail.com',
       license='MIT',
       packages=['pysequen'],
-      install_requires=[
-          'gevent',
-          'python-slimta'
-      ],
+      install_requires=[],
       zip_safe=False)
