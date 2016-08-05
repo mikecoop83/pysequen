@@ -1,41 +1,33 @@
 import logging
 import sys
 import random
+import time
 from pysequen.sequencedpool import SequencedPool
 
 if __name__ == '__main__':
-    import time
+    results = []
 
-    class Task(object):
-        def __init__(self, task_id):
-            self.task_id = task_id
+    class EvenOddTask(object):
+        def __init__(self, task_num):
+            self.task_num = task_num
 
         def can_run_with(self, other_task):
-            return other_task.task_id % 2 != self.task_id % 2
-
-        def __str__(self):
-            return str(self.task_id)
-
-        def __repr__(self):
-            return str(self.task_id)
-
-        def __eq__(self, other_task):
-            return self.task_id == other_task.task_id
-
-        def __hash__(self):
-            return hash(self.task_id)
+            return other_task.task_num % 2 != self.task_num % 2
 
         def run(self):
-            logging.info('Task %d begin' % self.task_id)
+            logging.info('Task %d begin' % self.task_num)
+            results.append('S%d' % self.task_num)
             delta = random.random() - 0.5
             time.sleep(0.5 + delta)
-            logging.info('Task %d end' % self.task_id)
+            results.append('E%d' % self.task_num)
+            logging.info('Task %d end' % self.task_num)
 
     logging.basicConfig(format='%(asctime)s [%(levelname)s] [%(threadName)s] %(message)s', loglevel=logging.DEBUG)
     logging.getLogger().setLevel(logging.DEBUG)
 
-    sp = SequencedPool(3, 64, 'test pool', False)
-    for task_id in xrange(100):
-        sp.add_task(Task(task_id + 1))
-    sys.stdin.read()
+    sp = SequencedPool(50, 10, 'test pool', False)
+    for task_num in xrange(20):
+        sp.add_task(EvenOddTask(task_num + 1))
+    sys.stdin.readline()
     sp.stop()
+    logging.info(results)
