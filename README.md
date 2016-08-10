@@ -11,11 +11,13 @@ they are added to the pool along with their ability to execute at the same
 time as other tasks.  Tasks must implement two methods in order to be added
 to the pool.
 
+```python
 def can_run_with(self, other_task):
     return True  # or False
 
 def run(self):
     ... # code to be run on the thread in the pool
+```
 
 can_run_with should return True if the tasks can run concurrently or False
 if the tasks cannot run concurrently.  When this method is called by the
