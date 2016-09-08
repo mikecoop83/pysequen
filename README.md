@@ -2,6 +2,12 @@
 
 Python library for concurrent processing of tasks with dependencies requiring sequencing
 
+## Install
+
+```bash
+pip install pysequen
+```
+
 ## Get Started
 
 SequencedPool is a class which maintains a pool of threads that handle concurrent and sequenced workloads.
